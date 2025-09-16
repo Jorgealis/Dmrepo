@@ -8,23 +8,52 @@ import {
   StyleSheet, 
   KeyboardAvoidingView, 
   Platform,
-  Dimensions 
+  Dimensions,
+  Alert,
+  ActivityIndicator
 } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
+import { useAuth } from '@/context/Authcontext';
 
 const { width, height } = Dimensions.get('window');
 
 export default function Login() {
   const router = useRouter();
-  const [username, setUsername] = useState('');
+  const { signIn } = useAuth();
+  const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
+  const [loading, setLoading] = useState(false);
 
-  const handleLogin = () => {
-    // Aquí agregarías la lógica de autenticación
-    router.push('/(main)');
+  const handleLogin = async () => {
+    if (!email || !password) {
+      Alert.alert('Error', 'Por favor completa todos los campos');
+      return;
+    }
+
+    if (!email.includes('@')) {
+      Alert.alert('Error', 'Por favor ingresa un email válido');
+      return;
+    }
+
+    setLoading(true);
+    
+    try {
+      const { error } = await signIn(email, password);
+      
+      if (error) {
+        Alert.alert('Error de inicio de sesión', error);
+      } else {
+        // La navegación se manejará automáticamente por el contexto de autenticación
+        router.replace('/(main)');
+      }
+    } catch (error) {
+      Alert.alert('Error', 'Ocurrió un error inesperado');
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -46,17 +75,19 @@ export default function Login() {
           <Text style={styles.subtitle}>Sign in to your account</Text>
           
           <View style={styles.formContainer}>
-            {/* Campo Username */}
+            {/* Campo Email */}
             <View style={styles.inputContainer}>
               <View style={styles.inputWrapper}>
-                <Ionicons name="person-outline" size={20} color="#999" style={styles.icon} />
+                <Ionicons name="mail-outline" size={20} color="#999" style={styles.icon} />
                 <TextInput
                   style={styles.input}
-                  placeholder="Username"
+                  placeholder="Email"
                   placeholderTextColor="#999"
-                  value={username}
-                  onChangeText={setUsername}
+                  value={email}
+                  onChangeText={setEmail}
                   autoCapitalize="none"
+                  keyboardType="email-address"
+                  autoComplete="email"
                 />
               </View>
             </View>
@@ -73,6 +104,7 @@ export default function Login() {
                   onChangeText={setPassword}
                   secureTextEntry={!showPassword}
                   autoCapitalize="none"
+                  autoComplete="password"
                 />
                 <TouchableOpacity 
                   onPress={() => setShowPassword(!showPassword)}
@@ -93,14 +125,22 @@ export default function Login() {
             </TouchableOpacity>
 
             {/* Sign In Button */}
-            <TouchableOpacity style={styles.signInButton} onPress={handleLogin}>
+            <TouchableOpacity 
+              style={[styles.signInButton, loading && styles.disabledButton]} 
+              onPress={handleLogin}
+              disabled={loading}
+            >
               <LinearGradient
                 colors={['#C44569', '#FF6B6B']}
                 style={styles.signInGradient}
                 start={{ x: 0, y: 0 }}
                 end={{ x: 1, y: 0 }}
               >
-                <Text style={styles.signInText}>Sign in</Text>
+                {loading ? (
+                  <ActivityIndicator size="small" color="white" />
+                ) : (
+                  <Text style={styles.signInText}>Sign in</Text>
+                )}
               </LinearGradient>
             </TouchableOpacity>
 
@@ -216,6 +256,9 @@ const styles = StyleSheet.create({
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.2,
     shadowRadius: 4,
+  },
+  disabledButton: {
+    opacity: 0.7,
   },
   signInGradient: {
     paddingVertical: 18,

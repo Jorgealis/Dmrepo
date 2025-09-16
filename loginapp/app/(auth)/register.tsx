@@ -8,14 +8,18 @@ import {
   StyleSheet, 
   KeyboardAvoidingView, 
   Platform,
-  ScrollView 
+  ScrollView,
+  Alert,
+  ActivityIndicator
 } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
+import { useAuth } from '@/context/Authcontext';
 
 export default function Register() {
   const router = useRouter();
+  const { signUp } = useAuth();
   const [formData, setFormData] = useState({
     fullName: '',
     email: '',
@@ -25,10 +29,69 @@ export default function Register() {
   });
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+  const [loading, setLoading] = useState(false);
 
-  const handleRegister = () => {
-    // Aquí agregarías la lógica de registro
-    router.push('/(main)');
+  const validateForm = () => {
+    if (!formData.fullName || !formData.email || !formData.username || !formData.password || !formData.confirmPassword) {
+      Alert.alert('Error', 'Por favor completa todos los campos');
+      return false;
+    }
+
+    if (!formData.email.includes('@')) {
+      Alert.alert('Error', 'Por favor ingresa un email válido');
+      return false;
+    }
+
+    if (formData.username.length < 3) {
+      Alert.alert('Error', 'El nombre de usuario debe tener al menos 3 caracteres');
+      return false;
+    }
+
+    if (formData.password.length < 6) {
+      Alert.alert('Error', 'La contraseña debe tener al menos 6 caracteres');
+      return false;
+    }
+
+    if (formData.password !== formData.confirmPassword) {
+      Alert.alert('Error', 'Las contraseñas no coinciden');
+      return false;
+    }
+
+    return true;
+  };
+
+  const handleRegister = async () => {
+    if (!validateForm()) return;
+
+    setLoading(true);
+    
+    try {
+      const { error } = await signUp(
+        formData.email, 
+        formData.password, 
+        formData.fullName, 
+        formData.username
+      );
+      
+      if (error) {
+        Alert.alert('Error de registro', error);
+      } else {
+        Alert.alert(
+          'Registro exitoso', 
+          'Tu cuenta ha sido creada. Revisa tu email para verificar tu cuenta.',
+          [
+            {
+              text: 'OK',
+              onPress: () => router.push('/login')
+            }
+          ]
+        );
+      }
+    } catch (error) {
+      Alert.alert('Error', 'Ocurrió un error inesperado');
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -56,6 +119,7 @@ export default function Register() {
                 placeholderTextColor="#999"
                 value={formData.fullName}
                 onChangeText={(text) => setFormData({...formData, fullName: text})}
+                autoComplete="name"
               />
             </View>
 
@@ -70,6 +134,7 @@ export default function Register() {
                 onChangeText={(text) => setFormData({...formData, email: text})}
                 keyboardType="email-address"
                 autoCapitalize="none"
+                autoComplete="email"
               />
             </View>
 
@@ -83,6 +148,7 @@ export default function Register() {
                 value={formData.username}
                 onChangeText={(text) => setFormData({...formData, username: text})}
                 autoCapitalize="none"
+                autoComplete="username"
               />
             </View>
 
@@ -97,6 +163,7 @@ export default function Register() {
                 onChangeText={(text) => setFormData({...formData, password: text})}
                 secureTextEntry={!showPassword}
                 autoCapitalize="none"
+                autoComplete="password"
               />
               <TouchableOpacity onPress={() => setShowPassword(!showPassword)}>
                 <Ionicons 
@@ -118,6 +185,7 @@ export default function Register() {
                 onChangeText={(text) => setFormData({...formData, confirmPassword: text})}
                 secureTextEntry={!showConfirmPassword}
                 autoCapitalize="none"
+                autoComplete="password"
               />
               <TouchableOpacity onPress={() => setShowConfirmPassword(!showConfirmPassword)}>
                 <Ionicons 
@@ -129,14 +197,22 @@ export default function Register() {
             </View>
 
             {/* Register Button */}
-            <TouchableOpacity style={styles.registerButton} onPress={handleRegister}>
+            <TouchableOpacity 
+              style={[styles.registerButton, loading && styles.disabledButton]} 
+              onPress={handleRegister}
+              disabled={loading}
+            >
               <LinearGradient
                 colors={['#093637', '#44A08D']}
                 style={styles.buttonGradient}
                 start={{ x: 0, y: 0 }}
                 end={{ x: 1, y: 0 }}
               >
-                <Text style={styles.registerText}>Create Account</Text>
+                {loading ? (
+                  <ActivityIndicator size="small" color="white" />
+                ) : (
+                  <Text style={styles.registerText}>Create Account</Text>
+                )}
               </LinearGradient>
             </TouchableOpacity>
 
@@ -215,6 +291,9 @@ const styles = StyleSheet.create({
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.2,
     shadowRadius: 4,
+  },
+  disabledButton: {
+    opacity: 0.7,
   },
   buttonGradient: {
     paddingVertical: 18,

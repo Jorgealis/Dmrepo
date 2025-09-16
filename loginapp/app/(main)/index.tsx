@@ -2,13 +2,13 @@
 import React from 'react';
 import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
-import { useRouter } from 'expo-router';
+import { useAuth } from '@/context/Authcontext';
 
 export default function Home() {
-  const router = useRouter();
+  const { user, signOut } = useAuth();
 
-  const handleLogout = () => {
-    router.replace('/welcome');
+  const handleLogout = async () => {
+    await signOut();
   };
 
   return (
@@ -18,7 +18,12 @@ export default function Home() {
     >
       <View style={styles.content}>
         <Text style={styles.title}>Welcome to Home!</Text>
-        <Text style={styles.subtitle}>You have successfully logged in</Text>
+        <Text style={styles.subtitle}>
+          Hello {user?.user_metadata?.full_name || user?.email}!
+        </Text>
+        <Text style={styles.description}>
+          You have successfully logged in to your social media app
+        </Text>
         
         <TouchableOpacity style={styles.logoutButton} onPress={handleLogout}>
           <Text style={styles.logoutText}>Logout</Text>
@@ -46,10 +51,17 @@ const styles = StyleSheet.create({
     textAlign: 'center',
   },
   subtitle: {
+    fontSize: 18,
+    color: 'rgba(255, 255, 255, 0.9)',
+    marginBottom: 20,
+    textAlign: 'center',
+  },
+  description: {
     fontSize: 16,
     color: 'rgba(255, 255, 255, 0.8)',
     marginBottom: 40,
     textAlign: 'center',
+    lineHeight: 24,
   },
   logoutButton: {
     backgroundColor: 'rgba(255, 255, 255, 0.2)',

@@ -1,15 +1,31 @@
 // app/(main)/profile.tsx
 import React from 'react';
-import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, Alert } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Ionicons } from '@expo/vector-icons';
-import { useRouter } from 'expo-router';
+import { useAuth } from '@/context/Authcontext';
 
 export default function Profile() {
-  const router = useRouter();
+  const { user, signOut } = useAuth();
 
   const handleLogout = () => {
-    router.replace('/welcome');
+    Alert.alert(
+      'Cerrar sesión',
+      '¿Estás seguro de que quieres cerrar sesión?',
+      [
+        {
+          text: 'Cancelar',
+          style: 'cancel',
+        },
+        {
+          text: 'Cerrar sesión',
+          onPress: async () => {
+            await signOut();
+          },
+          style: 'destructive',
+        },
+      ]
+    );
   };
 
   return (
@@ -21,18 +37,38 @@ export default function Profile() {
         <View style={styles.profileSection}>
           <View style={styles.avatarContainer}>
             <View style={styles.avatar}>
-              <Ionicons name="person" size={50} color="#999" />
+              <Text style={styles.avatarText}>
+                {user?.user_metadata?.full_name?.charAt(0)?.toUpperCase() || 
+                 user?.email?.charAt(0)?.toUpperCase() || 'U'}
+              </Text>
             </View>
           </View>
           
-          <Text style={styles.name}>Jorge Alarcon</Text>
-          <Text style={styles.email}>jorge.alarcon@gmail.com</Text>
+          <Text style={styles.name}>
+            {user?.user_metadata?.full_name || 'Usuario'}
+          </Text>
+          <Text style={styles.username}>
+            @{user?.user_metadata?.username || 'username'}
+          </Text>
+          <Text style={styles.email}>{user?.email}</Text>
         </View>
 
         <View style={styles.menuSection}>
           <TouchableOpacity style={styles.menuItem}>
             <Ionicons name="settings-outline" size={24} color="#666" />
             <Text style={styles.menuText}>Settings</Text>
+            <Ionicons name="chevron-forward" size={20} color="#999" />
+          </TouchableOpacity>
+
+          <TouchableOpacity style={styles.menuItem}>
+            <Ionicons name="person-outline" size={24} color="#666" />
+            <Text style={styles.menuText}>Edit Profile</Text>
+            <Ionicons name="chevron-forward" size={20} color="#999" />
+          </TouchableOpacity>
+
+          <TouchableOpacity style={styles.menuItem}>
+            <Ionicons name="notifications-outline" size={24} color="#666" />
+            <Text style={styles.menuText}>Notifications</Text>
             <Ionicons name="chevron-forward" size={20} color="#999" />
           </TouchableOpacity>
 
@@ -87,15 +123,25 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.1,
     shadowRadius: 4,
   },
+  avatarText: {
+    fontSize: 36,
+    fontWeight: 'bold',
+    color: '#FF6B6B',
+  },
   name: {
     fontSize: 24,
     fontWeight: 'bold',
     color: '#333',
     marginBottom: 5,
   },
-  email: {
+  username: {
     fontSize: 16,
     color: '#666',
+    marginBottom: 5,
+  },
+  email: {
+    fontSize: 14,
+    color: '#999',
   },
   menuSection: {
     backgroundColor: 'rgba(255, 255, 255, 0.9)',
@@ -109,7 +155,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 20,
     paddingVertical: 15,
     borderBottomWidth: 1,
-    borderBottomColor: 'rgba(0, 0, 0, 0.1)',
+    borderBottomColor: 'rgba(0, 0, 0, 0.05)',
   },
   menuText: {
     flex: 1,
