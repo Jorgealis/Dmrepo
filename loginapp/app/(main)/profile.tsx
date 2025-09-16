@@ -25,8 +25,8 @@ export default function Profile() {
             </View>
           </View>
           
-          <Text style={styles.name}>John Doe</Text>
-          <Text style={styles.email}>john.doe@example.com</Text>
+          <Text style={styles.name}>Jorge Alarcon</Text>
+          <Text style={styles.email}>jorge.alarcon@gmail.com</Text>
         </View>
 
         <View style={styles.menuSection}>
